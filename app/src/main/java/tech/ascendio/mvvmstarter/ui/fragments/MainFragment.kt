@@ -1,17 +1,17 @@
 package tech.ascendio.mvvmstarter.ui.fragments
 
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.ViewModelProviders
-import com.google.android.material.snackbar.Snackbar
-import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.plusAssign
+import io.reactivex.rxkotlin.subscribeBy
 import kotlinx.android.synthetic.main.fragment_main.*
 import tech.ascendio.mvvmstarter.R
+import tech.ascendio.mvvmstarter.data.repositories.JsonRpcRepository
 import tech.ascendio.mvvmstarter.databinding.FragmentMainBinding
 import tech.ascendio.mvvmstarter.di.InjectorUtils
-import tech.ascendio.mvvmstarter.ui.adapters.BookAdapter
-import tech.ascendio.mvvmstarter.utilities.autoCleared
-import tech.ascendio.mvvmstarter.viewmodels.BookViewModel
+import tech.ascendio.mvvmstarter.viewmodels.JsonRpcViewModel
 
 /*
  * Copyright (C) 2018 Marian Vasilca@Ascendio TechVision
@@ -38,33 +38,26 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
     override val tag: String
         get() = "MainFragment"
 
-    private val compositeDisposable = CompositeDisposable()
-    private lateinit var viewModel: BookViewModel
-    private var adapter by autoCleared<BookAdapter>()
+    private lateinit var jsonRpcViewModel: JsonRpcViewModel
 
     override fun onBoundViews(savedInstanceState: Bundle?) {
-        setAdapter()
-        val factory = InjectorUtils.provideBookViewModelFactory(requireContext().applicationContext)
-        viewModel = ViewModelProviders.of(this, factory).get(BookViewModel::class.java)
-        subscribeUI()
-        fetch()
+        initViewModels()
+        tvSend.setOnClickListener { sendMessage(etMessage.text.toString()) }
     }
 
-    private fun setAdapter() {
-        adapter = BookAdapter { book ->
-            Snackbar.make(view!!, "Clicked on ${book.name}", Snackbar.LENGTH_LONG).show()
-        }
-        rvBooks.adapter = adapter
+    private fun initViewModels() {
+        val jsonRpcViewModelFactory = InjectorUtils.provideJsonRpcViewModelFactory()
+        jsonRpcViewModel = ViewModelProviders.of(this, jsonRpcViewModelFactory).get(JsonRpcViewModel::class.java)
     }
 
-    private fun fetch() = viewModel.fetch()
-
-    private fun subscribeUI() {
-        compositeDisposable += viewModel.observeCats(onNext = { books -> adapter.submitList(books) })
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        compositeDisposable.clear()
+    private fun sendMessage(message: String) {
+        val startTime = System.currentTimeMillis()
+        compositeDisposable += jsonRpcViewModel.sendMessage(message)
+                .subscribeBy(onSuccess = {
+                    Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
+                    Log.i(tag, "Time: ${System.currentTimeMillis() - startTime}")
+                }, onError = {
+                    Log.i(JsonRpcRepository.TAG, it.message)
+                })
     }
 }

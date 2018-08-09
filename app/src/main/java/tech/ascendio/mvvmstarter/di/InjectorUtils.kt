@@ -1,13 +1,10 @@
 package tech.ascendio.mvvmstarter.di
 
-import android.content.Context
-import tech.ascendio.mvvmstarter.data.api.ApiService
-import tech.ascendio.mvvmstarter.data.db.AppDatabase
-import tech.ascendio.mvvmstarter.data.repositories.BookRepository
-import tech.ascendio.mvvmstarter.utilities.schedulers.IoScheduler
+import tech.ascendio.mvvmstarter.data.api.JsonRpcService
+import tech.ascendio.mvvmstarter.data.repositories.JsonRpcRepository
 import tech.ascendio.mvvmstarter.utilities.schedulers.MainScheduler
 import tech.ascendio.mvvmstarter.utilities.schedulers.NetworkScheduler
-import tech.ascendio.mvvmstarter.viewmodels.BookViewModelFactory
+import tech.ascendio.mvvmstarter.viewmodels.JsonRpcViewModelFactory
 
 /*
  * Copyright (C) 2018 Marian Vasilca@Ascendio TechVision
@@ -29,18 +26,13 @@ import tech.ascendio.mvvmstarter.viewmodels.BookViewModelFactory
  * Static methods used to inject classes needed for various Activities and Fragments.
  */
 object InjectorUtils {
-    private fun getBookRepository(context: Context): BookRepository {
-        return BookRepository.getInstance(
-                ApiService.create(),
-                AppDatabase.getInstance(context).bookDao(),
-                MainScheduler(),
-                IoScheduler(),
-                NetworkScheduler()
-        )
-    }
 
-    fun provideBookViewModelFactory(context: Context): BookViewModelFactory {
-        val repository = getBookRepository(context)
-        return BookViewModelFactory(repository)
-    }
+    private fun getJsonRpcRepository() =
+            JsonRpcRepository.getInstance(
+                    JsonRpcService.create(),
+                    MainScheduler(),
+                    NetworkScheduler()
+            )
+
+    fun provideJsonRpcViewModelFactory() = JsonRpcViewModelFactory(getJsonRpcRepository())
 }

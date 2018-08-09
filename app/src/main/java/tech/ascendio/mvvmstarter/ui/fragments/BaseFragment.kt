@@ -14,6 +14,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
+import io.reactivex.disposables.CompositeDisposable
 import tech.ascendio.mvvmstarter.ui.activities.MainActivity
 import tech.ascendio.mvvmstarter.utilities.AutoClearedValue
 
@@ -28,7 +29,7 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     lateinit var viewDataBinding: T
     @VisibleForTesting
     var binding: AutoClearedValue<T>? = null
-
+    protected val compositeDisposable = CompositeDisposable()
 
     override fun onAttach(context: Context?) {
         super.onAttach(context)
@@ -70,6 +71,7 @@ abstract class BaseFragment<T : ViewDataBinding> : Fragment() {
     }
 
     override fun onDestroyView() {
+        compositeDisposable.clear()
         super.onDestroyView()
         Log.i(tag, "onDestroyView")
     }

@@ -1,11 +1,7 @@
 package tech.ascendio.mvvmstarter.viewmodels
 
 import androidx.lifecycle.ViewModel
-import io.reactivex.Flowable
-import io.reactivex.disposables.Disposable
-import io.reactivex.rxkotlin.subscribeBy
-import tech.ascendio.mvvmstarter.data.repositories.BookRepository
-import tech.ascendio.mvvmstarter.data.vo.Book
+import tech.ascendio.mvvmstarter.data.repositories.JsonRpcRepository
 
 /*
  * Copyright (C) 2018 Marian Vasilca@Ascendio TechVision
@@ -23,13 +19,9 @@ import tech.ascendio.mvvmstarter.data.vo.Book
  * limitations under the License.
  */
 
-class BookViewModel(
-        val bookRepository: BookRepository
+class JsonRpcViewModel(
+        private val jsonRpcRepository: JsonRpcRepository
 ) : ViewModel() {
-    private val books: Flowable<List<Book>> = bookRepository.startListeningForBooks()
 
-    fun observeCats(onNext: (List<Book>) -> Unit, onError: (Throwable) -> Unit = {}): Disposable =
-            books.subscribeBy(onNext = onNext, onError = onError)
-
-    fun fetch() = bookRepository.fetch()
+    fun sendMessage(message: String) = jsonRpcRepository.sendMessage(message)
 }

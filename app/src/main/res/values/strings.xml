@@ -2,4 +2,6 @@
     <string name="app_name">MVVM starter</string>
 
     <string name="title_main">Main</string>
+    <string name="send">Send</string>
+    <string name="enter_message">Enter a message</string>
 </resources>

@@ -27,6 +27,8 @@ buildscript {
         retrofitVersion = '2.4.0'
         rxKotlinVersion = '2.2.0'
         rxAndroidVersion = '2.0.2'
+        jsonRPC = '1.0.0-SNAPSHOT'
+        okhttp_logging_interceptor = '3.9.0'
 
         // Gradle
         gradleVersion = '3.2.0-beta03'
@@ -62,6 +64,7 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
     }
 }
 

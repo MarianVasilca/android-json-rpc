@@ -1,8 +1,3 @@
-package tech.ascendio.mvvmstarter.data.vo
-
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
 /*
  * Copyright (C) 2018 Marian Vasilca@Ascendio TechVision
  *
@@ -19,12 +14,18 @@ import androidx.room.PrimaryKey
  * limitations under the License.
  */
 
-@Entity(tableName = "books")
-data class Book(
-        @PrimaryKey val isbn: String,
-        val name: String,
-        val numberOfPages: Int,
-        val authors: List<String>
-) {
-    fun firstAuthor() = if (authors.isNotEmpty()) authors[0] else "No author"
+package tech.ascendio.mvvmstarter.viewmodels
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import tech.ascendio.mvvmstarter.data.repositories.JsonRpcRepository
+
+/**
+ * Factory for creating a [JsonRpcViewModel] with a constructor that takes a [JsonRpcRepository].
+ */
+class JsonRpcViewModelFactory(
+        private val repository: JsonRpcRepository
+) : ViewModelProvider.NewInstanceFactory() {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>) = JsonRpcViewModel(repository) as T
 }

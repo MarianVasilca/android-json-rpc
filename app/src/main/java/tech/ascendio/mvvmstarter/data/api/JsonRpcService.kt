@@ -1,11 +1,16 @@
 package tech.ascendio.mvvmstarter.data.api
 
+import com.segment.jsonrpc.JsonRPC
+import com.segment.jsonrpc.JsonRPCConverterFactory
 import io.reactivex.Single
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import tech.ascendio.mvvmstarter.data.vo.Book
+import retrofit2.http.Body
+import retrofit2.http.POST
+
 
 /*
  * Copyright (C) 2018 Marian Vasilca@Ascendio TechVision
@@ -23,21 +28,29 @@ import tech.ascendio.mvvmstarter.data.vo.Book
  * limitations under the License.
  */
 
-interface ApiService {
+interface JsonRpcService {
 
-    @GET("books")
-    fun getBooks(): Single<List<Book>>
+    @JsonRPC("test_echo")
+    @POST("api/")
+    fun echo(@Body a: String): Single<String>
 
     companion object {
-        fun create(): ApiService {
+        fun create(): JsonRpcService {
+
+            val logging = HttpLoggingInterceptor()
+            logging.level = HttpLoggingInterceptor.Level.BODY
+
+            val client = OkHttpClient().newBuilder().addInterceptor(logging).build()
 
             val retrofit = Retrofit.Builder()
+                    .client(client)
+                    .baseUrl("http://ascendio.go.ro:8081/")
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                    .addConverterFactory(JsonRPCConverterFactory.create())
                     .addConverterFactory(GsonConverterFactory.create())
-                    .baseUrl("https://www.anapioficeandfire.com/api/")
                     .build()
 
-            return retrofit.create(ApiService::class.java)
+            return retrofit.create(JsonRpcService::class.java)
         }
     }
 }
