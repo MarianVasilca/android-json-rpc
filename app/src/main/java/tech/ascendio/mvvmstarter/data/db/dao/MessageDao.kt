@@ -1,10 +1,10 @@
-package tech.ascendio.mvvmstarter.viewmodels
+package tech.ascendio.mvvmstarter.data.db.dao
 
-import androidx.lifecycle.ViewModel
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import io.reactivex.Flowable
-import io.reactivex.disposables.Disposable
-import io.reactivex.rxkotlin.subscribeBy
-import tech.ascendio.mvvmstarter.data.repositories.JsonRpcRepository
 import tech.ascendio.mvvmstarter.data.vo.Message
 
 /*
@@ -23,14 +23,24 @@ import tech.ascendio.mvvmstarter.data.vo.Message
  * limitations under the License.
  */
 
-class JsonRpcViewModel(
-        private val jsonRpcRepository: JsonRpcRepository
-) : ViewModel() {
+/**
+ * Interface for database access for [Message] related operations.
+ */
+@Dao
+interface MessageDao {
 
-    private val messages: Flowable<List<Message>> = jsonRpcRepository.startListeningForMessages()
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(messages: Array<Message>)
 
-    fun observeMessages(onNext: (List<Message>) -> Unit, onError: (Throwable) -> Unit = {}): Disposable =
-            messages.subscribeBy(onNext = onNext, onError = onError)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(messages: List<Message>)
 
-    fun sendMessage(message: String) = jsonRpcRepository.sendMessage(message)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(message: Message)
+
+    @Query("SELECT * FROM messages")
+    fun listenForMessages(): Flowable<List<Message>>
+
+    @Query("DELETE FROM messages")
+    fun deleteMessages()
 }

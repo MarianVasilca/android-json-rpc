@@ -16,6 +16,7 @@
 
 package tech.ascendio.mvvmstarter.ui.common
 
+import android.view.View
 import android.widget.ImageView
 import androidx.databinding.BindingAdapter
 import com.bumptech.glide.Glide
@@ -33,4 +34,9 @@ fun imageFromUrl(view: ImageView, imageUrl: String?) {
 @BindingAdapter("goneIf")
 fun goneIf(view: FloatingActionButton, isGone: Boolean?) {
     if (isGone == null || isGone) view.hide() else view.show()
+}
+
+@BindingAdapter("goneUnless")
+fun showHide(view: View, show: Boolean) {
+    view.visibility = if (show) View.VISIBLE else View.GONE
 }

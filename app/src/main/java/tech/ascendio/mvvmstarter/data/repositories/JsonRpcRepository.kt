@@ -1,6 +1,12 @@
 package tech.ascendio.mvvmstarter.data.repositories
 
+import android.util.Log
+import io.reactivex.Flowable
+import io.reactivex.Single
+import io.reactivex.rxkotlin.subscribeBy
 import tech.ascendio.mvvmstarter.data.api.JsonRpcService
+import tech.ascendio.mvvmstarter.data.db.dao.MessageDao
+import tech.ascendio.mvvmstarter.data.vo.Message
 import tech.ascendio.mvvmstarter.utilities.schedulers.MainScheduler
 import tech.ascendio.mvvmstarter.utilities.schedulers.Scheduler
 
@@ -23,12 +29,42 @@ import tech.ascendio.mvvmstarter.utilities.schedulers.Scheduler
 class JsonRpcRepository constructor(
         private val jsonRpcService: JsonRpcService,
         private val mainScheduler: MainScheduler,
-        private val networkScheduler: Scheduler
+        private val networkScheduler: Scheduler,
+        private val ioScheduler: Scheduler,
+        private val messageDao: MessageDao
 ) {
 
-    fun sendMessage(message: String) = jsonRpcService.echo(message)
-            .subscribeOn(networkScheduler.asRxScheduler())
-            .observeOn(mainScheduler.asRxScheduler())!!
+    fun startListeningForMessages(): Flowable<List<Message>> =
+            messageDao.listenForMessages()
+                    .distinctUntilChanged()
+                    .observeOn(mainScheduler.asRxScheduler())
+                    .replay(1)
+                    .autoConnect(0)
+
+    fun sendMessage(message: String) {
+        createSaveBooksTask(message).subscribeBy(onSuccess = {
+            // Success
+        }, onError = { throwable ->
+            Log.i(TAG, "Fetching failed", throwable)
+        })
+    }
+
+    private fun createSaveBooksTask(message: String): Single<Unit> = Single.create { emitter ->
+        jsonRpcService.echo(message)
+                .subscribeOn(networkScheduler.asRxScheduler())
+                .observeOn(ioScheduler.asRxScheduler())
+                .subscribeBy(onSuccess = {
+                    if (it == null) {
+                        emitter.onSuccess(Unit)
+                        return@subscribeBy
+                    }
+                    messageDao.insert(Message(message, 1))
+                    messageDao.insert(Message(it, 0))
+                    emitter.onSuccess(Unit)
+                }, onError = {
+                    emitter.onError(it)
+                })
+    }
 
     companion object {
         const val TAG = "JsonRpcRepository"
@@ -38,10 +74,10 @@ class JsonRpcRepository constructor(
         private var instance: JsonRpcRepository? = null
 
         fun getInstance(jsonRpcService: JsonRpcService, mainScheduler: MainScheduler,
-                        networkScheduler: Scheduler) =
+                        networkScheduler: Scheduler, iokScheduler: Scheduler, messageDao: MessageDao) =
                 instance ?: synchronized(this) {
-                    instance
-                            ?: JsonRpcRepository(jsonRpcService, mainScheduler, networkScheduler).also { instance = it }
+                    instance ?: JsonRpcRepository(jsonRpcService, mainScheduler, networkScheduler,
+                            iokScheduler, messageDao).also { instance = it }
                 }
     }
 }

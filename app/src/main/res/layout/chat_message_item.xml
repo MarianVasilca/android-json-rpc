@@ -1,0 +1,47 @@
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+
+        <variable
+            name="message"
+            type="tech.ascendio.mvvmstarter.data.vo.Message" />
+
+        <variable
+            name="position"
+            type="Integer" />
+
+    </data>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/margin_screen_edge"
+        android:layout_marginTop="@dimen/margin_top_views"
+        android:layout_marginEnd="@dimen/margin_screen_edge">
+
+        <TextView
+            style="?attr/textAppearanceBody1"
+            goneUnless="@{message.isBot()}"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_left_message"
+            android:maxWidth="300dp"
+            android:padding="@dimen/padding_view"
+            android:text="@{message.text}"
+            android:textIsSelectable="true" />
+
+        <TextView
+            style="?attr/textAppearanceBody1"
+            goneUnless="@{message.isBot() == false}"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:background="@drawable/bg_right_message"
+            android:maxWidth="300dp"
+            android:padding="@dimen/padding_view"
+            android:text="@{message.text}"
+            android:textColor="@android:color/white"
+            android:textIsSelectable="true" />
+
+    </FrameLayout>
+</layout>

@@ -1,16 +1,14 @@
 package tech.ascendio.mvvmstarter.ui.fragments
 
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.ViewModelProviders
 import io.reactivex.rxkotlin.plusAssign
-import io.reactivex.rxkotlin.subscribeBy
 import kotlinx.android.synthetic.main.fragment_main.*
 import tech.ascendio.mvvmstarter.R
-import tech.ascendio.mvvmstarter.data.repositories.JsonRpcRepository
 import tech.ascendio.mvvmstarter.databinding.FragmentMainBinding
 import tech.ascendio.mvvmstarter.di.InjectorUtils
+import tech.ascendio.mvvmstarter.ui.adapters.MessageAdapter
+import tech.ascendio.mvvmstarter.utilities.autoCleared
 import tech.ascendio.mvvmstarter.viewmodels.JsonRpcViewModel
 
 /*
@@ -39,25 +37,34 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
         get() = "MainFragment"
 
     private lateinit var jsonRpcViewModel: JsonRpcViewModel
+    private var adapter by autoCleared<MessageAdapter>()
 
     override fun onBoundViews(savedInstanceState: Bundle?) {
+        setAdapter()
         initViewModels()
-        tvSend.setOnClickListener { sendMessage(etMessage.text.toString()) }
+        tvSend.setOnClickListener {
+            jsonRpcViewModel.sendMessage(etMessage.text.toString())
+            etMessage.text.clear()
+        }
+        subscribeUI()
+    }
+
+    private fun setAdapter() {
+        adapter = MessageAdapter { }
+        rvMessages.adapter = adapter
     }
 
     private fun initViewModels() {
-        val jsonRpcViewModelFactory = InjectorUtils.provideJsonRpcViewModelFactory()
+        val jsonRpcViewModelFactory = InjectorUtils.provideJsonRpcViewModelFactory(requireContext())
         jsonRpcViewModel = ViewModelProviders.of(this, jsonRpcViewModelFactory).get(JsonRpcViewModel::class.java)
     }
 
-    private fun sendMessage(message: String) {
-        val startTime = System.currentTimeMillis()
-        compositeDisposable += jsonRpcViewModel.sendMessage(message)
-                .subscribeBy(onSuccess = {
-                    Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
-                    Log.i(tag, "Time: ${System.currentTimeMillis() - startTime}")
-                }, onError = {
-                    Log.i(JsonRpcRepository.TAG, it.message)
-                })
+    private fun subscribeUI() {
+        compositeDisposable += jsonRpcViewModel.observeMessages(onNext = {
+            adapter.submitList(it)
+            rvMessages.smoothScrollToPosition(it.lastIndex)
+        }, onError = {
+
+        })
     }
 }

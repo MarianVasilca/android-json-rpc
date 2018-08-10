@@ -19,6 +19,7 @@
     <dimen name="text_size_subhead_material">16sp</dimen>
 
     <!-- Padding -->
+    <dimen name="padding_view">8dp</dimen>
     <dimen name="padding_bottom_views">8dp</dimen>
 
     <!-- Margins -->
@@ -27,4 +28,5 @@
 
     <!--Corner-->
     <dimen name="card_view_explore_corner">10dp</dimen>
+    <dimen name="corner_message">24dp</dimen>
 </resources>

@@ -1,7 +1,10 @@
 package tech.ascendio.mvvmstarter.di
 
+import android.content.Context
 import tech.ascendio.mvvmstarter.data.api.JsonRpcService
+import tech.ascendio.mvvmstarter.data.db.AppDatabase
 import tech.ascendio.mvvmstarter.data.repositories.JsonRpcRepository
+import tech.ascendio.mvvmstarter.utilities.schedulers.IoScheduler
 import tech.ascendio.mvvmstarter.utilities.schedulers.MainScheduler
 import tech.ascendio.mvvmstarter.utilities.schedulers.NetworkScheduler
 import tech.ascendio.mvvmstarter.viewmodels.JsonRpcViewModelFactory
@@ -27,12 +30,15 @@ import tech.ascendio.mvvmstarter.viewmodels.JsonRpcViewModelFactory
  */
 object InjectorUtils {
 
-    private fun getJsonRpcRepository() =
+    private fun getJsonRpcRepository(context: Context) =
             JsonRpcRepository.getInstance(
                     JsonRpcService.create(),
                     MainScheduler(),
-                    NetworkScheduler()
+                    NetworkScheduler(),
+                    IoScheduler(),
+                    AppDatabase.getInstance(context).messagesDao()
             )
 
-    fun provideJsonRpcViewModelFactory() = JsonRpcViewModelFactory(getJsonRpcRepository())
+    fun provideJsonRpcViewModelFactory(context: Context) =
+            JsonRpcViewModelFactory(getJsonRpcRepository(context))
 }
