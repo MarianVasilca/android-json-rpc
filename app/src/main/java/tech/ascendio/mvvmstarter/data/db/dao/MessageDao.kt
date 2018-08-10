@@ -36,11 +36,14 @@ interface MessageDao {
     fun insert(messages: List<Message>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(message: Message)
+    fun insert(message: Message): Long
 
     @Query("SELECT * FROM messages")
     fun listenForMessages(): Flowable<List<Message>>
 
     @Query("DELETE FROM messages")
     fun deleteMessages()
+
+    @Query("DELETE FROM messages WHERE id = :id")
+    fun deleteMessage(id: Long)
 }

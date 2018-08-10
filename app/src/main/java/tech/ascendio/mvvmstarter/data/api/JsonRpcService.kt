@@ -3,6 +3,7 @@ package tech.ascendio.mvvmstarter.data.api
 import com.segment.jsonrpc.JsonRPC
 import com.segment.jsonrpc.JsonRPCConverterFactory
 import io.reactivex.Single
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -35,7 +36,9 @@ interface JsonRpcService {
     fun echo(@Body a: String): Single<String>
 
     companion object {
-        fun create(): JsonRpcService {
+        private const val BASE_URL = "http://ascendio.go.ro:8081/"
+        fun create(): JsonRpcService = create(HttpUrl.parse(BASE_URL)!!)
+        private fun create(httpUrl: HttpUrl): JsonRpcService {
 
             val logging = HttpLoggingInterceptor()
             logging.level = HttpLoggingInterceptor.Level.BODY
@@ -44,7 +47,7 @@ interface JsonRpcService {
 
             val retrofit = Retrofit.Builder()
                     .client(client)
-                    .baseUrl("http://ascendio.go.ro:8081/")
+                    .baseUrl(httpUrl)
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     .addConverterFactory(JsonRPCConverterFactory.create())
                     .addConverterFactory(GsonConverterFactory.create())

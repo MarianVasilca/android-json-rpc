@@ -1,6 +1,8 @@
 package tech.ascendio.mvvmstarter.ui.fragments
 
 import android.os.Bundle
+import android.util.Log
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import io.reactivex.rxkotlin.plusAssign
 import kotlinx.android.synthetic.main.fragment_main.*
@@ -9,6 +11,7 @@ import tech.ascendio.mvvmstarter.databinding.FragmentMainBinding
 import tech.ascendio.mvvmstarter.di.InjectorUtils
 import tech.ascendio.mvvmstarter.ui.adapters.MessageAdapter
 import tech.ascendio.mvvmstarter.utilities.autoCleared
+import tech.ascendio.mvvmstarter.utilities.network.Status
 import tech.ascendio.mvvmstarter.viewmodels.JsonRpcViewModel
 
 /*
@@ -60,11 +63,20 @@ class MainFragment : BaseFragment<FragmentMainBinding>() {
     }
 
     private fun subscribeUI() {
-        compositeDisposable += jsonRpcViewModel.observeMessages(onNext = {
-            adapter.submitList(it)
-            rvMessages.smoothScrollToPosition(it.lastIndex)
+        compositeDisposable += jsonRpcViewModel.observeMessages(onNext = { messages ->
+            Log.i(tag, "Size: ${messages.size}")
+            adapter.submitList(messages)
+            rvMessages.smoothScrollToPosition(messages.lastIndex)
         }, onError = {
 
+        })
+
+        jsonRpcViewModel.refreshState.observe(this, Observer {
+            when (it.status) {
+                Status.RUNNING -> Log.i(tag, "Loading")
+                Status.SUCCESS -> Log.i(tag, "Success")
+                Status.FAILED -> Log.i(tag, "Failed: ${it.msg}")
+            }
         })
     }
 }

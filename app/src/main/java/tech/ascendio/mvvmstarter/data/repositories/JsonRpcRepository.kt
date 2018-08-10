@@ -1,12 +1,15 @@
 package tech.ascendio.mvvmstarter.data.repositories
 
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import io.reactivex.Flowable
 import io.reactivex.Single
 import io.reactivex.rxkotlin.subscribeBy
 import tech.ascendio.mvvmstarter.data.api.JsonRpcService
 import tech.ascendio.mvvmstarter.data.db.dao.MessageDao
 import tech.ascendio.mvvmstarter.data.vo.Message
+import tech.ascendio.mvvmstarter.utilities.network.NetworkState
+import tech.ascendio.mvvmstarter.utilities.runOnIoThread
 import tech.ascendio.mvvmstarter.utilities.schedulers.MainScheduler
 import tech.ascendio.mvvmstarter.utilities.schedulers.Scheduler
 
@@ -36,20 +39,31 @@ class JsonRpcRepository constructor(
 
     fun startListeningForMessages(): Flowable<List<Message>> =
             messageDao.listenForMessages()
-                    .distinctUntilChanged()
                     .observeOn(mainScheduler.asRxScheduler())
-                    .replay(1)
-                    .autoConnect(0)
 
-    fun sendMessage(message: String) {
-        createSaveBooksTask(message).subscribeBy(onSuccess = {
-            // Success
-        }, onError = { throwable ->
-            Log.i(TAG, "Fetching failed", throwable)
-        })
+    fun sendMessage(message: String): MutableLiveData<NetworkState> {
+        val networkState = MutableLiveData<NetworkState>()
+        networkState.value = NetworkState.LOADING
+
+        runOnIoThread {
+            val insertedId = messageDao.insert(Message(message, 1))
+            createSendMessageTask(message, insertedId)
+                    .observeOn(mainScheduler.asRxScheduler())
+                    .subscribeBy(
+                            onSuccess = {
+                                // Success
+                                networkState.value = NetworkState.LOADED
+                            },
+                            onError = { throwable ->
+                                Log.i(TAG, "Fetching failed", throwable)
+                                networkState.value = NetworkState.error(throwable.message)
+                            })
+        }
+        return networkState
     }
 
-    private fun createSaveBooksTask(message: String): Single<Unit> = Single.create { emitter ->
+    private fun createSendMessageTask(message: String, insertedId: Long): Single<Unit> = Single.create { emitter ->
+        Log.i(TAG, "InsertedID: $insertedId")
         jsonRpcService.echo(message)
                 .subscribeOn(networkScheduler.asRxScheduler())
                 .observeOn(ioScheduler.asRxScheduler())
@@ -58,10 +72,12 @@ class JsonRpcRepository constructor(
                         emitter.onSuccess(Unit)
                         return@subscribeBy
                     }
-                    messageDao.insert(Message(message, 1))
+                    Log.i(TAG, "onSuccess createSendMessageTask")
                     messageDao.insert(Message(it, 0))
                     emitter.onSuccess(Unit)
                 }, onError = {
+                    Log.i(TAG, "Delete ID: $insertedId")
+                    messageDao.deleteMessage(insertedId)
                     emitter.onError(it)
                 })
     }

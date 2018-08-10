@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MVVM starter</string>
+    <string name="app_name">Echo Chat</string>
 
     <string name="title_main">Main</string>
     <string name="send">Send</string>

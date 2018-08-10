@@ -1,11 +1,15 @@
 package tech.ascendio.mvvmstarter.viewmodels
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import io.reactivex.Flowable
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
 import tech.ascendio.mvvmstarter.data.repositories.JsonRpcRepository
 import tech.ascendio.mvvmstarter.data.vo.Message
+import tech.ascendio.mvvmstarter.utilities.network.NetworkState
 
 /*
  * Copyright (C) 2018 Marian Vasilca@Ascendio TechVision
@@ -32,5 +36,12 @@ class JsonRpcViewModel(
     fun observeMessages(onNext: (List<Message>) -> Unit, onError: (Throwable) -> Unit = {}): Disposable =
             messages.subscribeBy(onNext = onNext, onError = onError)
 
-    fun sendMessage(message: String) = jsonRpcRepository.sendMessage(message)
+    val message = MutableLiveData<String>()
+    fun sendMessage(msg: String) {
+        message.value = msg
+    }
+
+    val refreshState: LiveData<NetworkState> = Transformations.switchMap(message) {
+        jsonRpcRepository.sendMessage(it)
+    }
 }
